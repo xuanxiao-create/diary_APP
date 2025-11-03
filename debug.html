@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug - 检查用户数据</title>
+</head>
+<body>
+    <h1>用户数据检查</h1>
+    <button onclick="checkUsers()">检查用户数据</button>
+    <div id="output"></div>
+
+    <script>
+        function checkUsers() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const output = document.getElementById('output');
+            
+            output.innerHTML = '<h2>用户数据：</h2>';
+            output.innerHTML += '<pre>' + JSON.stringify(users, null, 2) + '</pre>';
+            
+            // 检查是否有admin用户
+            const adminUser = users.find(u => u.username === 'admin');
+            output.innerHTML += '<h3>管理员账号检查：</h3>';
+            if (adminUser) {
+                output.innerHTML += '<p style="color: green;">✓ 管理员账号存在</p>';
+                output.innerHTML += '<p>用户名: ' + adminUser.username + '</p>';
+                output.innerHTML += '<p>密码: ' + adminUser.password + '</p>';
+                output.innerHTML += '<p>角色: ' + adminUser.role + '</p>';
+            } else {
+                output.innerHTML += '<p style="color: red;">✗ 管理员账号不存在</p>';
+            }
+            
+            // 检查demo用户
+            const demoUser = users.find(u => u.username === 'demo');
+            output.innerHTML += '<h3>Demo账号检查：</h3>';
+            if (demoUser) {
+                output.innerHTML += '<p style="color: green;">✓ Demo账号存在</p>';
+            } else {
+                output.innerHTML += '<p style="color: red;">✗ Demo账号不存在</p>';
+            }
+        }
+    </script>
+</body>
+</html>

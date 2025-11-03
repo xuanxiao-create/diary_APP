@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>日环记 - 角色系统调试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .user-item { padding: 10px; margin: 5px 0; border: 1px solid #eee; border-radius: 3px; }
+        .role-admin { background-color: #fee; }
+        .role-user { background-color: #efe; }
+        .role-guest { background-color: #eef; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>日环记APP - 角色系统调试工具</h1>
+        
+        <!-- 用户数据检查 -->
+        <div class="section">
+            <h2>📊 用户数据检查</h2>
+            <button onclick="checkUserData()">检查所有用户数据</button>
+            <div id="user-data-output"></div>
+        </div>
+
+        <!-- 登录测试 -->
+        <div class="section">
+            <h2>🔐 登录测试</h2>
+            <div>
+                <input type="text" id="test-username" placeholder="用户名" value="admin">
+                <input type="password" id="test-password" placeholder="密码" value="admin123">
+                <button onclick="testLogin()">测试登录</button>
+                <button onclick="testWrongPassword()">测试错误密码 (admin/123456)</button>
+            </div>
+            <div id="login-result"></div>
+        </div>
+
+        <!-- 角色显示测试 -->
+        <div class="section">
+            <h2>👤 角色显示测试</h2>
+            <div id="current-user-display">
+                <p>当前用户: <span id="current-username">未登录</span></p>
+                <p>当前角色: <span id="current-role">未登录</span></p>
+                <p>角色徽章: <span id="role-badge-test" class="role-badge hidden">无</span></p>
+            </div>
+            <button onclick="simulateLogin()">模拟登录admin/admin123</button>
+            <button onclick="simulateWrongLogin()">模拟登录admin/123456</button>
+            <button onclick="clearCurrentUser()">清除当前用户</button>
+        </div>
+
+        <!-- 管理员功能测试 -->
+        <div class="section">
+            <h2>🛠️ 管理员功能测试</h2>
+            <button onclick="checkAdminFunctions()">检查管理员功能</button>
+            <div id="admin-test-result"></div>
+        </div>
+
+        <!-- 修复工具 -->
+        <div class="section">
+            <h2>🔧 修复工具</h2>
+            <button onclick="fixAdminAccount()">修复管理员账号 (admin/admin123)</button>
+            <button onclick="createMissingAdmin()">创建缺失的管理员账号</button>
+            <button onclick="clearAllData()">清空所有数据</button>
+            <div id="fix-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 检查用户数据
+        function checkUserData() {
+            const output = document.getElementById('user-data-output');
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            
+            output.innerHTML = '<h3>注册用户列表：</h3>';
+            if (users.length === 0) {
+                output.innerHTML += '<p class="error">❌ 没有找到任何用户数据</p>';
+            } else {
+                users.forEach(user => {
+                    const roleClass = `role-${user.role}`;
+                    output.innerHTML += `
+                        <div class="user-item ${roleClass}">
+                            <strong>用户名:</strong> ${user.username}<br>
+                            <strong>密码:</strong> ${user.password}<br>
+                            <strong>角色:</strong> ${user.role}<br>
+                            <strong>邮箱:</strong> ${user.email || '未设置'}<br>
+                            <strong>创建时间:</strong> ${user.created_at || '未知'}
+                        </div>
+                    `;
+                });
+            }
+            
+            output.innerHTML += '<h3>当前登录用户：</h3>';
+            if (currentUser) {
+                output.innerHTML += `
+                    <div class="user-item">
+                        <strong>用户名:</strong> ${currentUser.username}<br>
+                        <strong>角色:</strong> ${currentUser.role}<br>
+                        <strong>登录时间:</strong> ${currentUser.login_time || '未知'}
+                    </div>
+                `;
+            } else {
+                output.innerHTML += '<p class="warning">⚠️ 当前没有用户登录</p>';
+            }
+        }
+
+        // 测试登录功能
+        function testLogin() {
+            const username = document.getElementById('test-username').value;
+            const password = document.getElementById('test-password').value;
+            const result = document.getElementById('login-result');
+            
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                // 模拟登录
+                localStorage.setItem('currentUser', JSON.stringify({
+                    ...user,
+                    login_time: new Date().toISOString()
+                }));
+                
+                result.innerHTML = `
+                    <p class="success">✅ 登录成功!</p>
+                    <p>用户名: ${user.username}</p>
+                    <p>角色: ${user.role}</p>
+                `;
+                
+                updateCurrentUserDisplay();
+            } else {
+                result.innerHTML = `
+                    <p class="error">❌ 登录失败!</p>
+                    <p>用户名或密码错误</p>
+                    <p>尝试的用户名: ${username}</p>
+                    <p>尝试的密码: ${password}</p>
+                `;
+            }
+        }
+
+        // 测试错误密码
+        function testWrongPassword() {
+            document.getElementById('test-username').value = 'admin';
+            document.getElementById('test-password').value = '123456';
+            testLogin();
+        }
+
+        // 更新当前用户显示
+        function updateCurrentUserDisplay() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            const usernameSpan = document.getElementById('current-username');
+            const roleSpan = document.getElementById('current-role');
+            const roleBadge = document.getElementById('role-badge-test');
+            
+            if (currentUser) {
+                usernameSpan.textContent = currentUser.username;
+                roleSpan.textContent = currentUser.role;
+                roleBadge.textContent = getRoleDisplayName(currentUser.role);
+                roleBadge.className = `role-badge role-${currentUser.role}`;
+                roleBadge.classList.remove('hidden');
+            } else {
+                usernameSpan.textContent = '未登录';
+                roleSpan.textContent = '未登录';
+                roleBadge.className = 'role-badge hidden';
+                roleBadge.textContent = '无';
+            }
+        }
+
+        // 获取角色显示名称
+        function getRoleDisplayName(role) {
+            switch(role) {
+                case 'admin': return '管理员';
+                case 'guest': return '游客';
+                case 'user': return '用户';
+                default: return '未知';
+            }
+        }
+
+        // 模拟登录admin/admin123
+        function simulateLogin() {
+            document.getElementById('test-username').value = 'admin';
+            document.getElementById('test-password').value = 'admin123';
+            testLogin();
+        }
+
+        // 模拟登录admin/123456
+        function simulateWrongLogin() {
+            document.getElementById('test-username').value = 'admin';
+            document.getElementById('test-password').value = '123456';
+            testLogin();
+        }
+
+        // 清除当前用户
+        function clearCurrentUser() {
+            localStorage.removeItem('currentUser');
+            updateCurrentUserDisplay();
+            document.getElementById('login-result').innerHTML = '<p class="success">✅ 已清除当前用户</p>';
+        }
+
+        // 检查管理员功能
+        function checkAdminFunctions() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            const result = document.getElementById('admin-test-result');
+            
+            if (!currentUser) {
+                result.innerHTML = '<p class="error">❌ 请先登录</p>';
+                return;
+            }
+            
+            const isAdmin = currentUser.role === 'admin';
+            result.innerHTML = `
+                <p><strong>当前用户:</strong> ${currentUser.username}</p>
+                <p><strong>用户角色:</strong> ${currentUser.role}</p>
+                <p><strong>是否为管理员:</strong> ${isAdmin ? '✅ 是' : '❌ 否'}</p>
+                <p><strong>管理员功能:</strong></p>
+                <ul>
+                    <li>${isAdmin ? '✅' : '❌'} 访问管理员面板</li>
+                    <li>${isAdmin ? '✅' : '❌'} 修改用户角色</li>
+                    <li>${isAdmin ? '✅' : '❌'} 查看所有用户数据</li>
+                    <li>${isAdmin ? '✅' : '❌'} 系统管理功能</li>
+                </ul>
+            `;
+        }
+
+        // 修复管理员账号
+        function fixAdminAccount() {
+            const result = document.getElementById('fix-result');
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            
+            // 查找或创建admin用户
+            let adminUser = users.find(u => u.username === 'admin');
+            
+            if (adminUser) {
+                // 更新密码为admin123
+                adminUser.password = 'admin123';
+                adminUser.role = 'admin';
+                result.innerHTML = '<p class="success">✅ 已更新管理员账号密码为: admin123</p>';
+            } else {
+                // 创建新的admin用户
+                adminUser = {
+                    id: 'admin_' + Date.now(),
+                    username: 'admin',
+                    email: 'admin@example.com',
+                    password: 'admin123',
+                    role: 'admin',
+                    created_at: new Date().toISOString()
+                };
+                users.push(adminUser);
+                result.innerHTML = '<p class="success">✅ 已创建管理员账号: admin/admin123</p>';
+            }
+            
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+            checkUserData();
+        }
+
+        // 创建缺失的管理员账号
+        function createMissingAdmin() {
+            const result = document.getElementById('fix-result');
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            
+            // 确保有demo用户
+            let demoUser = users.find(u => u.username === 'demo');
+            if (!demoUser) {
+                demoUser = {
+                    id: 'demo_' + Date.now(),
+                    username: 'demo',
+                    email: 'demo@example.com',
+                    password: '123456',
+                    role: 'user',
+                    created_at: new Date().toISOString()
+                };
+                users.push(demoUser);
+            }
+            
+            // 确保有admin用户
+            let adminUser = users.find(u => u.username === 'admin');
+            if (!adminUser) {
+                adminUser = {
+                    id: 'admin_' + Date.now(),
+                    username: 'admin',
+                    email: 'admin@example.com',
+                    password: 'admin123',
+                    role: 'admin',
+                    created_at: new Date().toISOString()
+                };
+                users.push(adminUser);
+                result.innerHTML = '<p class="success">✅ 已创建完整的测试账号</p>';
+            } else {
+                adminUser.password = 'admin123';
+                adminUser.role = 'admin';
+                result.innerHTML = '<p class="success">✅ 已修复管理员账号</p>';
+            }
+            
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+            checkUserData();
+        }
+
+        // 清空所有数据
+        function clearAllData() {
+            if (confirm('确定要清空所有数据吗？这将删除所有用户和任务数据！')) {
+                localStorage.clear();
+                updateCurrentUserDisplay();
+                document.getElementById('user-data-output').innerHTML = '<p class="success">✅ 所有数据已清空</p>';
+                document.getElementById('login-result').innerHTML = '';
+                document.getElementById('admin-test-result').innerHTML = '';
+                document.getElementById('fix-result').innerHTML = '<p class="success">✅ 数据已清空，刷新页面后系统会重新创建默认数据</p>';
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            updateCurrentUserDisplay();
+            checkUserData();
+        };
+    </script>
+</body>
+</html>

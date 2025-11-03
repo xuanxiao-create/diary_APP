@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录和页面加载测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-6">登录和页面加载测试</h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">当前状态</h2>
+            <div id="current-status" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">快速测试</h2>
+            <div class="space-x-4">
+                <button onclick="testLoginDemo()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    登录demo用户
+                </button>
+                <button onclick="testLoginAdmin()" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
+                    登录admin用户
+                </button>
+                <button onclick="testPages()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                    测试所有页面
+                </button>
+                <button onclick="logoutTest()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    退出登录
+                </button>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">测试结果</h2>
+            <div id="test-results" class="space-y-2">
+                <p class="text-gray-600">等待测试...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">页面链接</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="index.html" class="block p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-center">
+                    <div class="font-medium text-indigo-800">主页面</div>
+                </a>
+                <button onclick="goTo('schedule')" class="block p-4 bg-green-50 hover:bg-green-100 rounded-lg text-center">
+                    <div class="font-medium text-green-800">作息表</div>
+                </button>
+                <button onclick="goTo('categories')" class="block p-4 bg-purple-50 hover:bg-purple-100 rounded-lg text-center">
+                    <div class="font-medium text-purple-800">分类管理</div>
+                </button>
+                <button onclick="goTo('admin')" class="block p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg text-center">
+                    <div class="font-medium text-yellow-800">管理员</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // 检查当前状态
+        function checkCurrentStatus() {
+            const status = document.getElementById('current-status');
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            
+            if (currentUser) {
+                status.innerHTML = `
+                    <div class="text-green-600">✅ 已登录: ${currentUser.username}</div>
+                    <div class="text-blue-600">📋 角色: ${currentUser.role || 'user'}</div>
+                    <div class="text-gray-600">🆔 ID: ${currentUser.id}</div>
+                `;
+            } else {
+                status.innerHTML = `
+                    <div class="text-red-600">❌ 未登录</div>
+                    <div class="text-gray-600">请使用测试按钮登录</div>
+                `;
+            }
+        }
+        
+        // 测试登录demo用户
+        function testLoginDemo() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const demoUser = users.find(u => u.username === 'demo');
+            
+            if (demoUser) {
+                currentUser = demoUser;
+                localStorage.setItem('currentUser', JSON.stringify(demoUser));
+                updateUserInterface();
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="text-green-600">✅ demo用户登录成功</div>';
+                checkCurrentStatus();
+            } else {
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="text-red-600">❌ demo用户不存在</div>';
+            }
+        }
+        
+        // 测试登录admin用户
+        function testLoginAdmin() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const adminUser = users.find(u => u.username === 'admin');
+            
+            if (adminUser) {
+                currentUser = adminUser;
+                localStorage.setItem('currentUser', JSON.stringify(adminUser));
+                updateUserInterface();
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="text-green-600">✅ admin用户登录成功</div>';
+                checkCurrentStatus();
+            } else {
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="text-red-600">❌ admin用户不存在</div>';
+            }
+        }
+        
+        // 测试所有页面
+        function testPages() {
+            if (!currentUser) {
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="text-red-600">❌ 请先登录</div>';
+                return;
+            }
+            
+            const pages = ['schedule', 'categories', 'admin'];
+            let results = '<div class="space-y-1">';
+            
+            pages.forEach(page => {
+                try {
+                    goTo(page);
+                    results += `<div class="text-green-600">✅ ${page}页面加载成功</div>`;
+                } catch (error) {
+                    results += `<div class="text-red-600">❌ ${page}页面加载失败: ${error.message}</div>`;
+                }
+            });
+            
+            results += '</div>';
+            document.getElementById('test-results').innerHTML = results;
+        }
+        
+        // 退出登录测试
+        function logoutTest() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateUserInterface();
+            document.getElementById('test-results').innerHTML = 
+                '<div class="text-gray-600">ℹ️ 已退出登录</div>';
+            checkCurrentStatus();
+        }
+        
+        // 初始化
+        setTimeout(checkCurrentStatus, 500);
+    </script>
+</body>
+</html>

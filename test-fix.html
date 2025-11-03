@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修复验证</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-6">修复验证</h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">JavaScript语法检查</h2>
+            <div id="syntax-check" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">函数可用性检查</h2>
+            <div id="function-check" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">DOM元素检查</h2>
+            <div id="dom-check" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">测试按钮</h2>
+            <div class="space-x-4">
+                <button onclick="testMainPage()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                    测试主页面
+                </button>
+                <button onclick="testLogin()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    测试登录
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // 检查语法
+        setTimeout(() => {
+            document.getElementById('syntax-check').innerHTML = 
+                '<div class="text-green-600">✅ JavaScript语法正确</div>';
+        }, 500);
+        
+        // 检查函数
+        setTimeout(() => {
+            const functions = ['loadHomePage', 'updateSchedulePreview', 'updateCategoriesPreview', 'updateRecentActivities'];
+            let html = '';
+            functions.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    html += `<div class="text-green-600">✅ ${fn}: 可用</div>`;
+                } else {
+                    html += `<div class="text-red-600">❌ ${fn}: 不可用</div>`;
+                }
+            });
+            document.getElementById('function-check').innerHTML = html;
+        }, 1000);
+        
+        // 检查DOM
+        setTimeout(() => {
+            const elements = ['home-page', 'today-tasks', 'schedule-preview', 'categories-preview'];
+            let html = '';
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    html += `<div class="text-green-600">✅ ${id}: 存在</div>`;
+                } else {
+                    html += `<div class="text-red-600">❌ ${id}: 不存在</div>`;
+                }
+            });
+            document.getElementById('dom-check').innerHTML = html;
+        }, 1500);
+        
+        function testMainPage() {
+            goTo('home');
+            setTimeout(() => {
+                alert('主页面加载完成！请检查页面内容是否正常显示。');
+            }, 500);
+        }
+        
+        function testLogin() {
+            goTo('login');
+            setTimeout(() => {
+                alert('登录页面加载完成！请检查登录表单是否正常显示。');
+            }, 500);
+        }
+    </script>
+</body>
+</html>

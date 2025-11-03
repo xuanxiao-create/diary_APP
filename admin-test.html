@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-md mx-auto px-4 py-12">
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center mb-8">管理员登录测试</h1>
+            
+            <div class="mb-6 p-4 bg-green-50 rounded-lg">
+                <h3 class="font-semibold text-green-800 mb-2">测试步骤：</h3>
+                <ol class="text-sm text-green-700 space-y-1">
+                    <li>1. 点击"初始化数据"按钮</li>
+                    <li>2. 使用管理员账号登录</li>
+                    <li>3. 检查管理员面板访问权限</li>
+                </ol>
+            </div>
+            
+            <button onclick="initializeData()" class="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold mb-4">
+                初始化数据
+            </button>
+            
+            <form onsubmit="testLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                    <input id="test-username" type="text" value="admin" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                    <input id="test-password" type="password" value="admin123" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
+                </div>
+                <button type="submit" class="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold transition">
+                    测试登录
+                </button>
+            </form>
+            
+            <div id="result" class="mt-6 p-4 bg-gray-50 rounded-lg hidden">
+                <h3 class="font-semibold mb-2">测试结果：</h3>
+                <div id="result-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function initializeData() {
+            // 模拟initializeDemoUser函数
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            
+            // 创建demo用户
+            const demoUserExists = users.find(u => u.username === 'demo');
+            if (!demoUserExists) {
+                const demoUser = {
+                    id: 'demo_' + Date.now(),
+                    username: 'demo',
+                    email: 'demo@example.com',
+                    password: '123456',
+                    role: 'user',
+                    created_at: new Date().toISOString()
+                };
+                users.push(demoUser);
+            }
+            
+            // 创建管理员用户
+            const adminExists = users.find(u => u.username === 'admin');
+            if (!adminExists) {
+                const adminUser = {
+                    id: 'admin_' + Date.now(),
+                    username: 'admin',
+                    email: 'admin@example.com',
+                    password: 'admin123',
+                    role: 'admin',
+                    created_at: new Date().toISOString()
+                };
+                users.push(adminUser);
+            }
+            
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+            
+            showResult('success', '数据初始化完成！<br>用户数量: ' + users.length + '<br>管理员账号: admin/admin123<br>Demo账号: demo/123456');
+        }
+        
+        function testLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('test-username').value;
+            const password = document.getElementById('test-password').value;
+            
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (!user) {
+                showResult('error', '登录失败：用户名或密码错误');
+                return;
+            }
+            
+            let result = '登录成功！<br>';
+            result += '用户名: ' + user.username + '<br>';
+            result += '角色: ' + user.role + '<br>';
+            
+            if (user.role === 'admin') {
+                result += '<br>✓ 管理员权限验证通过';
+                result += '<br>✓ 可以访问管理员面板';
+                result += '<br>✓ 可以管理其他用户';
+            } else {
+                result += '<br>⚠ 普通用户权限';
+            }
+            
+            showResult('success', result);
+        }
+        
+        function showResult(type, message) {
+            const result = document.getElementById('result');
+            const content = document.getElementById('result-content');
+            
+            result.classList.remove('hidden');
+            
+            if (type === 'success') {
+                result.className = 'mt-6 p-4 bg-green-50 rounded-lg border border-green-200';
+                content.innerHTML = '<div class="text-green-700">' + message + '</div>';
+            } else {
+                result.className = 'mt-6 p-4 bg-red-50 rounded-lg border border-red-200';
+                content.innerHTML = '<div class="text-red-700">' + message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>

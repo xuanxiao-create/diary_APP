@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面加载调试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-6">页面加载调试</h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">JavaScript错误检查</h2>
+            <div id="js-errors" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">DOM元素检查</h2>
+            <div id="dom-check" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">localStorage检查</h2>
+            <div id="localstorage-check" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">网络请求检查</h2>
+            <div id="network-check" class="space-y-2">
+                <p class="text-gray-600">检查中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 检查JavaScript错误
+        window.onerror = function(msg, url, line, col, error) {
+            document.getElementById('js-errors').innerHTML += 
+                `<div class="text-red-600">❌ 错误: ${msg} (行: ${line})</div>`;
+        };
+        
+        // 检查DOM元素
+        function checkDOM() {
+            const elements = [
+                'home-page', 'today-tasks', 'schedule-preview', 
+                'categories-preview', 'weekly-stats'
+            ];
+            let html = '';
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    html += `<div class="text-green-600">✅ ${id}: 存在</div>`;
+                } else {
+                    html += `<div class="text-red-600">❌ ${id}: 不存在</div>`;
+                }
+            });
+            document.getElementById('dom-check').innerHTML = html;
+        }
+        
+        // 检查localStorage
+        function checkLocalStorage() {
+            const keys = ['currentUser', 'tasks', 'schedules', 'categories', 'registeredUsers'];
+            let html = '';
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    html += `<div class="text-green-600">✅ ${key}: ${value.substring(0, 50)}...</div>`;
+                } else {
+                    html += `<div class="text-yellow-600">⚠️ ${key}: 不存在</div>`;
+                }
+            });
+            document.getElementById('localstorage-check').innerHTML = html;
+        }
+        
+        // 检查网络请求
+        function checkNetwork() {
+            const script = document.createElement('script');
+            script.src = 'script.js';
+            script.onload = function() {
+                document.getElementById('network-check').innerHTML = 
+                    '<div class="text-green-600">✅ script.js 加载成功</div>';
+            };
+            script.onerror = function() {
+                document.getElementById('network-check').innerHTML = 
+                    '<div class="text-red-600">❌ script.js 加载失败</div>';
+            };
+            document.head.appendChild(script);
+        }
+        
+        // 初始化检查
+        setTimeout(() => {
+            checkDOM();
+            checkLocalStorage();
+            checkNetwork();
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>日环记 - 角色系统修复工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .step { margin: 20px 0; padding: 15px; border-left: 4px solid #3b82f6; background-color: #f8fafc; }
+        .success { color: #16a34a; }
+        .error { color: #dc2626; }
+        .warning { color: #d97706; }
+        .info { color: #2563eb; }
+        button { background-color: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background-color: #2563eb; }
+        button.danger { background-color: #dc2626; }
+        button.danger:hover { background-color: #b91c1c; }
+        button.success { background-color: #16a34a; }
+        button.success:hover { background-color: #15803d; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .result.success { background-color: #dcfce7; color: #166534; }
+        .result.error { background-color: #fef2f2; color: #991b1b; }
+        .result.info { background-color: #dbeafe; color: #1e40af; }
+        .credentials { background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .credentials strong { color: #1f2937; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 日环记角色系统修复工具</h1>
+            <p>解决管理员账号和角色显示问题</p>
+        </div>
+
+        <div class="step">
+            <h3>📋 问题诊断</h3>
+            <p>您遇到的问题：</p>
+            <ul>
+                <li>❌ 注册了 <code>admin/123456</code> 但无法正常使用</li>
+                <li>❌ 登录后没有看到用户角色系统</li>
+                <li>✅ 正确的管理员账号应该是 <code>admin/admin123</code></li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>🔧 一键修复</h3>
+            <p>点击下面的按钮自动修复所有问题：</p>
+            <button onclick="fixAllIssues()" class="success">🚀 一键修复所有问题</button>
+            <div id="fix-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>📝 手动修复步骤</h3>
+            <p>如果自动修复失败，请按以下步骤操作：</p>
+            <ol>
+                <li><button onclick="createCorrectAdmin()">创建正确的管理员账号 (admin/admin123)</button></li>
+                <li><button onclick="clearWrongAdmin()">删除错误的管理员账号 (admin/123456)</button></li>
+                <li><button onclick="verifySystem()">验证修复结果</button></li>
+            </ol>
+            <div id="manual-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>🔑 正确的登录信息</h3>
+            <div class="credentials">
+                <strong>管理员账号：</strong> admin / admin123<br>
+                <strong>普通用户：</strong> demo / 123456<br>
+                <strong>⚠️ 注意：</strong> 管理员密码是 <code>admin123</code>，不是 <code>123456</code>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🎯 角色系统功能</h3>
+            <p>修复后您将看到：</p>
+            <ul>
+                <li>✅ 用户名旁边显示角色徽章（管理员/用户/游客）</li>
+                <li>✅ 管理员可以看到"管理"按钮</li>
+                <li>✅ 管理员可以访问管理员面板</li>
+                <li>✅ 管理员可以修改其他用户的角色</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>🧪 测试验证</h3>
+            <p>修复完成后，请：</p>
+            <ol>
+                <li>返回主应用：<a href="index.html" target="_blank">打开日环记APP</a></li>
+                <li>使用 <code>admin/admin123</code> 登录</li>
+                <li>确认用户名旁边显示"管理员"徽章</li>
+                <li>确认可以看到"管理"按钮</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <h3>🆘 紧急重置</h3>
+            <p>如果仍然有问题，可以重置所有数据：</p>
+            <button onclick="resetAllData()" class="danger">⚠️ 重置所有数据</button>
+            <div id="reset-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 一键修复所有问题
+        function fixAllIssues() {
+            const result = document.getElementById('fix-result');
+            result.innerHTML = '<div class="result info">🔄 正在修复...</div>';
+            
+            try {
+                // 获取当前用户数据
+                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                let adminExists = false;
+                let wrongAdminExists = false;
+                
+                // 检查并修复管理员账号
+                users.forEach(user => {
+                    if (user.username === 'admin') {
+                        adminExists = true;
+                        if (user.password === '123456') {
+                            wrongAdminExists = true;
+                            user.password = 'admin123';
+                            user.role = 'admin';
+                        }
+                    }
+                });
+                
+                // 如果没有admin用户，创建一个
+                if (!adminExists) {
+                    users.push({
+                        id: 'admin_' + Date.now(),
+                        username: 'admin',
+                        email: 'admin@example.com',
+                        password: 'admin123',
+                        role: 'admin',
+                        created_at: new Date().toISOString()
+                    });
+                }
+                
+                // 确保有demo用户
+                let demoExists = users.find(u => u.username === 'demo');
+                if (!demoExists) {
+                    users.push({
+                        id: 'demo_' + Date.now(),
+                        username: 'demo',
+                        email: 'demo@example.com',
+                        password: '123456',
+                        role: 'user',
+                        created_at: new Date().toISOString()
+                    });
+                }
+                
+                // 保存修复后的数据
+                localStorage.setItem('registeredUsers', JSON.stringify(users));
+                
+                // 清除当前用户（如果登录了错误的账号）
+                localStorage.removeItem('currentUser');
+                
+                let message = '<div class="result success">✅ 修复完成！</div>';
+                message += '<p><strong>修复内容：</strong></p><ul>';
+                
+                if (wrongAdminExists) {
+                    message += '<li>✅ 已将管理员密码从 123456 修改为 admin123</li>';
+                }
+                if (!adminExists) {
+                    message += '<li>✅ 已创建管理员账号 admin/admin123</li>';
+                }
+                if (!demoExists) {
+                    message += '<li>✅ 已创建demo账号 demo/123456</li>';
+                }
+                message += '<li>✅ 已清除错误的登录状态</li>';
+                message += '</ul>';
+                message += '<p><strong>现在请使用以下账号登录：</strong></p>';
+                message += '<div class="credentials">';
+                message += '<strong>管理员：</strong> admin / admin123<br>';
+                message += '<strong>普通用户：</strong> demo / 123456';
+                message += '</div>';
+                
+                result.innerHTML = message;
+                
+            } catch (error) {
+                result.innerHTML = '<div class="result error">❌ 修复失败：' + error.message + '</div>';
+            }
+        }
+
+        // 创建正确的管理员账号
+        function createCorrectAdmin() {
+            const result = document.getElementById('manual-result');
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            
+            // 检查是否已有admin用户
+            let adminUser = users.find(u => u.username === 'admin');
+            
+            if (adminUser) {
+                adminUser.password = 'admin123';
+                adminUser.role = 'admin';
+                result.innerHTML = '<div class="result success">✅ 已更新管理员账号密码为 admin123</div>';
+            } else {
+                adminUser = {
+                    id: 'admin_' + Date.now(),
+                    username: 'admin',
+                    email: 'admin@example.com',
+                    password: 'admin123',
+                    role: 'admin',
+                    created_at: new Date().toISOString()
+                };
+                users.push(adminUser);
+                result.innerHTML = '<div class="result success">✅ 已创建管理员账号 admin/admin123</div>';
+            }
+            
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+        }
+
+        // 删除错误的管理员账号
+        function clearWrongAdmin() {
+            const result = document.getElementById('manual-result');
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            
+            // 过滤掉密码为123456的admin用户
+            const filteredUsers = users.filter(user => {
+                if (user.username === 'admin' && user.password === '123456') {
+                    return false; // 删除这个用户
+                }
+                return true; // 保留其他用户
+            });
+            
+            if (filteredUsers.length < users.length) {
+                localStorage.setItem('registeredUsers', JSON.stringify(filteredUsers));
+                result.innerHTML = '<div class="result success">✅ 已删除错误的管理员账号 (admin/123456)</div>';
+            } else {
+                result.innerHTML = '<div class="result info">ℹ️ 没有找到错误的管理员账号</div>';
+            }
+        }
+
+        // 验证系统
+        function verifySystem() {
+            const result = document.getElementById('manual-result');
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const admin = users.find(u => u.username === 'admin');
+            
+            let message = '<div class="result info">📊 验证结果：</div>';
+            message += '<ul>';
+            
+            if (admin) {
+                if (admin.password === 'admin123') {
+                    message += '<li class="success">✅ 管理员账号存在且密码正确 (admin/admin123)</li>';
+                } else {
+                    message += '<li class="error">❌ 管理员账号存在但密码错误，当前密码：' + admin.password + '</li>';
+                }
+                message += '<li class="success">✅ 管理员角色：' + admin.role + '</li>';
+            } else {
+                message += '<li class="error">❌ 管理员账号不存在</li>';
+            }
+            
+            const demo = users.find(u => u.username === 'demo');
+            if (demo) {
+                message += '<li class="success">✅ Demo账号存在 (demo/123456)</li>';
+            } else {
+                message += '<li class="warning">⚠️ Demo账号不存在</li>';
+            }
+            
+            message += '</ul>';
+            result.innerHTML = message;
+        }
+
+        // 重置所有数据
+        function resetAllData() {
+            const result = document.getElementById('reset-result');
+            
+            if (confirm('确定要重置所有数据吗？这将删除所有用户、任务和设置！')) {
+                localStorage.clear();
+                result.innerHTML = '<div class="result success">✅ 所有数据已重置。刷新页面后系统将重新创建默认数据。</div>';
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        }
+
+        // 页面加载时自动验证
+        window.onload = function() {
+            verifySystem();
+        };
+    </script>
+</body>
+</html>
